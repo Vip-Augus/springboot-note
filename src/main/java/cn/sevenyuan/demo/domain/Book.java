@@ -21,6 +21,10 @@ public class Book {
 
     private Date publishDate;
 
+    public Book(){}
+
+
+
     public Book(String name, Integer id, String author, BigDecimal price) {
         this.name = name;
         this.id = id;
