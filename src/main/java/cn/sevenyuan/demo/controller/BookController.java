@@ -77,7 +77,7 @@ public class BookController {
         return book;
     }
 
-    @PostMapping("/save")
+    @GetMapping("/save")
     public String saveName(@RequestParam("name") String name, HttpSession session) {
         session.setAttribute("name", name);
         return name;
