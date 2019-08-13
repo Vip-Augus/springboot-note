@@ -2,6 +2,7 @@ package cn.sevenyuan.demo.domain;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,7 +10,7 @@ import java.util.Date;
  * @author JingQ at 2019-08-04
  */
 @Data
-public class Book {
+public class Book implements Serializable {
 
     private String name;
 
