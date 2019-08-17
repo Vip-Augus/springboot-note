@@ -22,9 +22,10 @@ public class DatasourceConfig {
 
     @Bean
     public DruidDataSource druidDataSource() {
+        // 加个注释，实际上 springboot 都已经处理好了 =-=
         DruidDataSource dataSource = new DruidDataSource();
         dataSource.setUrl(env.getProperty("spring.datasource.url"));
-        dataSource.setUsername(env.getProperty("spring.datasource.name"));//用户名
+        dataSource.setUsername(env.getProperty("spring.datasource.username"));//用户名
         dataSource.setPassword(env.getProperty("spring.datasource.password"));//密码
         dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
         dataSource.setInitialSize(druidConfigBean.getInitialSize());//初始化时建立物理连接的个数
