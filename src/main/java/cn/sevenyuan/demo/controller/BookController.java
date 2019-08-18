@@ -3,6 +3,8 @@ package cn.sevenyuan.demo.controller;
 import cn.sevenyuan.demo.aop.BookService;
 import cn.sevenyuan.demo.domain.Book;
 import com.google.common.collect.Lists;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/book")
+@Api(tags = "书籍接口")
 public class BookController {
 
     @Value("${server.port}")
@@ -40,6 +43,7 @@ public class BookController {
     private StringRedisTemplate stringRedisTemplate;
 
     @GetMapping("/bookView")
+    @ApiOperation(value = "查看图书清单", notes = "mock 的数据", tags = "1.0.0")
     public ModelAndView books() {
         ModelAndView mv = new ModelAndView();
         List<Book> bookList = Lists.newArrayList();
@@ -54,6 +58,7 @@ public class BookController {
     }
 
     @GetMapping("/getById")
+    @ApiOperation(value = "根据 id 查询书籍", tags = "1.0.0", notes = "真实数据")
     public Book getById(@RequestParam("id") Integer id) {
         Book book = bookService.getBookById(id);
         if (book != null) {

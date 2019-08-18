@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>邮件</title>
+</head>
+<body>
+<div th:text="${subject}"></div>
+<div>书籍清单
+    <table border="1">
+        <tr>
+            <td>图书编号</td>
+            <td>图书名称</td>
+            <td>图书作者</td>
+        </tr>
+        <tr th:each="book:${books}">
+            <td th:text="${book.id}"></td>
+            <td th:text="${book.name}"></td>
+            <td th:text="${book.author}"></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

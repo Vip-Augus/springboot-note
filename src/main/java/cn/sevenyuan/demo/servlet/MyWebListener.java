@@ -12,11 +12,11 @@ public class MyWebListener implements ServletRequestListener {
 
     @Override
     public void requestDestroyed(ServletRequestEvent sre) {
-        System.out.println("MyWebListener>>>requestDestroyed");
+//        System.out.println("MyWebListener>>>requestDestroyed");
     }
 
     @Override
     public void requestInitialized(ServletRequestEvent sre) {
-        System.out.println("MyWebListener>>>initialized");
+//        System.out.println("MyWebListener>>>initialized");
     }
 }

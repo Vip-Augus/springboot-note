@@ -28,4 +28,13 @@ public interface MailService {
      * @param resIds    资源 ID
      */
     void sendMailWithImg(String from, String to, String subject, String content, String[] srcPath, String[] resIds);
+
+    /**
+     * 发送 html 邮件
+     * @param from      from
+     * @param to        to
+     * @param subject   主题
+     * @param content   html 内容
+     */
+    void sendHtmlMail(String from, String to, String subject, String content);
 }
