@@ -1,10 +1,13 @@
 package cn.sevenyuan.demo.controller;
 
 import cn.sevenyuan.demo.aop.BookService;
+import cn.sevenyuan.demo.aop.lock.RedisLockAnnotation;
+import cn.sevenyuan.demo.aop.lock.RedisLockTypeEnum;
 import cn.sevenyuan.demo.domain.Book;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -28,6 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/book")
 @Api(tags = "书籍接口")
+@Slf4j
 public class BookController {
 
     @Value("${server.port}")
@@ -80,6 +84,20 @@ public class BookController {
             ops2.set("b1", book);
         }
         return book;
+    }
+
+    @GetMapping("/testRedisLock")
+    @RedisLockAnnotation(typeEnum = RedisLockTypeEnum.ONE, lockTime = 3)
+    public Book testRedisLock(@RequestParam("userId") Long userId) {
+        try {
+            log.info("睡眠执行前");
+            Thread.sleep(10000);
+            log.info("睡眠执行后");
+        } catch (Exception e) {
+            // log error
+            log.info("has some error", e);
+        }
+        return null;
     }
 
     @GetMapping("/save")
