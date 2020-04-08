@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,6 +46,9 @@ public class BookController {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private RocketMqProducerTest mqProducerTest;
 
     @GetMapping("/bookView")
     @ApiOperation(value = "查看图书清单", notes = "mock 的数据", tags = "1.0.0")
@@ -109,5 +113,11 @@ public class BookController {
     @GetMapping("getSessionName")
     public String getSessionName(HttpSession session) {
         return port + ":" + session.getAttribute("name");
+    }
+
+    @GetMapping("/testMessage")
+    public String testMessage() {
+        mqProducerTest.sendMessageTest();
+        return "Hello World";
     }
 }
