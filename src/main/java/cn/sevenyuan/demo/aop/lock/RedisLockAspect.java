@@ -1,9 +1,7 @@
 package cn.sevenyuan.demo.aop.lock;
 
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -14,9 +12,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Iterator;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,20 +30,17 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RedisLockAspect {
 
-    @Autowired
-    private RedisTemplate redisTemplate;
-
-    /**
-     * 存储目前有效的key定义
-     */
-    private static ConcurrentLinkedQueue<RedisLockDefinitionHolder> holderList = new ConcurrentLinkedQueue();
-
-
     /**
      * 线程池，维护keyAliveTime
      */
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1,
             new BasicThreadFactory.Builder().namingPattern("redisLock-schedule-pool").daemon(true).build());
+    /**
+     * 存储目前有效的key定义
+     */
+    private static ConcurrentLinkedQueue<RedisLockDefinitionHolder> holderList = new ConcurrentLinkedQueue();
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     {
         // 两秒执行一次「续时」操作
@@ -87,6 +81,26 @@ public class RedisLockAspect {
     }
 
     /**
+     * 获取指定类上的指定方法
+     *
+     * @param clazz          指定类
+     * @param name           指定方法
+     * @param parameterTypes 参数类型列表
+     * @return 找到就返回method，否则返回null
+     */
+    public static Method getDeclaredMethodFor(Class<?> clazz, String name, Class<?>... parameterTypes) {
+        try {
+            return clazz.getDeclaredMethod(name, parameterTypes);
+        } catch (NoSuchMethodException e) {
+            Class<?> superClass = clazz.getSuperclass();
+            if (superClass != null) {
+                return getDeclaredMethodFor(superClass, name, parameterTypes);
+            }
+        }
+        return null;
+    }
+
+    /**
      * @annotation 中的路径表示拦截特定注解
      */
     @Pointcut("@annotation(cn.sevenyuan.demo.aop.lock.RedisLockAnnotation)")
@@ -107,7 +121,8 @@ public class RedisLockAspect {
         // 加锁
         Object result = null;
         try {
-            boolean isSuccess = redisTemplate.opsForValue().setIfAbsent(businessKey, uniqueValue);
+            // atomic lock, make sure the key has change can expire
+            boolean isSuccess = redisTemplate.opsForValue().setIfAbsent(businessKey, uniqueValue, Duration.ofMinutes(1L));
             if (!isSuccess) {
                 throw new Exception("You can't do it，because another has get the lock =-=");
             }
@@ -120,20 +135,17 @@ public class RedisLockAspect {
             if (currentThread.isInterrupted()) {
                 throw new InterruptedException("You had been interrupted =-=");
             }
-        } catch (InterruptedException e ) {
+        } catch (InterruptedException e) {
             log.error("Interrupt exception, rollback transaction", e);
             throw new Exception("Interrupt exception, please send request again");
         } catch (Exception e) {
             log.error("has some error, please check again", e);
         } finally {
             // 请求结束后，强制删掉 key，释放锁
-            redisTemplate.delete(businessKey);
-            log.info("release the lock, businessKey is [" + businessKey + "]");
+            releaseValidKey(businessKey, Thread.currentThread());
         }
         return result;
     }
-
-
 
     private Method resolveMethod(ProceedingJoinPoint pjp) {
         MethodSignature signature = (MethodSignature) pjp.getSignature();
@@ -150,22 +162,23 @@ public class RedisLockAspect {
     }
 
     /**
-     * 获取指定类上的指定方法
+     * Accept from  li-shaoke
      *
-     * @param clazz          指定类
-     * @param name           指定方法
-     * @param parameterTypes 参数类型列表
-     * @return 找到就返回method，否则返回null
+     * make sure release lock in current thread
+     *
+     * @param businessKey    unique key
+     * @param currentThread  thread info
      */
-    public static Method getDeclaredMethodFor(Class<?> clazz, String name, Class<?>... parameterTypes) {
+    private void releaseValidKey(String businessKey, Thread currentThread) {
         try {
-            return clazz.getDeclaredMethod(name, parameterTypes);
-        } catch (NoSuchMethodException e) {
-            Class<?> superClass = clazz.getSuperclass();
-            if (superClass != null) {
-                return getDeclaredMethodFor(superClass, name, parameterTypes);
+            RedisLockDefinitionHolder redisLockDefinitionHolder = holderList.stream().filter(h -> businessKey.equals(h.getBusinessKey())).findFirst().orElse(null);
+            if (redisLockDefinitionHolder != null && redisLockDefinitionHolder.getCurrentTread().equals(currentThread)) {
+                // 请求结束后，强制删掉 key，释放锁
+                redisTemplate.delete(businessKey);
+                log.info("release the lock, businessKey is [" + businessKey + "]");
             }
+        } catch (Exception e) {
+            log.error("release the lock error", e);
         }
-        return null;
     }
 }
