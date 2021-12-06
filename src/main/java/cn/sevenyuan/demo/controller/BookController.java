@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
@@ -43,6 +44,9 @@ public class BookController {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -119,5 +123,18 @@ public class BookController {
     public String testMessage() {
         mqProducerTest.sendMessageTest();
         return "Hello World";
+    }
+
+    @GetMapping("/addBookByMessage")
+    public void addBookByMessage() {
+        String topicName = "cart-item-add-topic";
+        mqProducerTest.addCustomBook(topicName, 10, "Wonderful Life", "Augus", BigDecimal.TEN);
+    }
+
+    @GetMapping("/testHttp")
+    public void testHtpp() {
+        String url = "https://www.baidu.com";
+        String response = restTemplate.getForObject(url, String.class);
+        System.out.println(response);
     }
 }

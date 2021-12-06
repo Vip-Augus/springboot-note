@@ -26,4 +26,9 @@ public class RocketMqProducerTest {
         rocketMQTemplate.convertAndSend("cart-item-remove-topic", book3);
         rocketMQTemplate.convertAndSend("cart-item-search-topic", book4);
     }
+
+    public void addCustomBook(String topic, Integer id, String bookName, String author, BigDecimal money) {
+        Book book = new Book(bookName, id, author, money);
+        rocketMQTemplate.convertAndSend(topic, book);
+    }
 }
