@@ -175,6 +175,8 @@ public class RedisLockAspect {
             if (redisLockDefinitionHolder != null && redisLockDefinitionHolder.getCurrentTread().equals(currentThread)) {
                 // 请求结束后，强制删掉 key，释放锁
                 redisTemplate.delete(businessKey);
+                // remove holder when release redis lock, Accept @zhuquanzhen Suggestion
+                holderList.remove(redisLockDefinitionHolder);
                 log.info("release the lock, businessKey is [" + businessKey + "]");
             }
         } catch (Exception e) {
